@@ -41,3 +41,9 @@ export async function resolve(query, requestedBy, { spawn = defaultSpawn } = {})
     }),
   ]
 }
+
+export function stream(track, { spawn = defaultSpawn } = {}) {
+  const args = ['-o', '-', '-f', 'bestaudio', '--no-playlist', track.url]
+  const child = spawn('yt-dlp', args)
+  return child.stdout
+}
