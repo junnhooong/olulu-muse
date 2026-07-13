@@ -6,6 +6,10 @@ import * as resume from './resume.js'
 import * as stop from './stop.js'
 import * as leave from './leave.js'
 import * as shuffle from './shuffle.js'
+import * as loop from './loop.js'
+import * as volume from './volume.js'
+import * as queue from './queue.js'
+import * as nowplaying from './nowplaying.js'
 
 export const commands = new Map([
   ['ping', ping],
@@ -16,4 +20,8 @@ export const commands = new Map([
   ['stop', stop],
   ['leave', leave],
   ['shuffle', shuffle],
+  ['loop', loop],
+  ['volume', volume],
+  ['queue', queue],
+  ['nowplaying', nowplaying],
 ])
