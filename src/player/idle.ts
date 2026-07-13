@@ -1,19 +1,51 @@
+import type { RegistryLike } from '../types.js'
+
+export interface IdleTimers {
+  setTimeout: (cb: () => void, ms: number) => number
+  clearTimeout: (id: number) => void
+}
+
+interface MemberVoiceState {
+  user?: { bot?: boolean }
+  voice?: { channelId?: string | null }
+}
+
+export interface VoiceStateSnapshot {
+  guild: {
+    id: string
+    members: { cache: Map<string, MemberVoiceState> }
+  }
+  channelId: string | null
+}
+
+export interface IdleWatcherOptions {
+  registry: RegistryLike
+  botUserId: string
+  timeoutMs?: number
+  timers?: IdleTimers
+  getBotChannelId?: (guildId: string) => string | null | undefined
+}
+
+const defaultTimers: IdleTimers = {
+  setTimeout: (cb, ms) => setTimeout(cb, ms) as unknown as number,
+  clearTimeout: (id) => clearTimeout(id as unknown as ReturnType<typeof setTimeout>),
+}
+
 export function createIdleWatcher({
   registry,
-  botUserId,
   timeoutMs = 30_000,
-  timers = { setTimeout, clearTimeout },
+  timers = defaultTimers,
   getBotChannelId,
-}) {
-  const timerByGuild = new Map()
+}: IdleWatcherOptions): { handleVoiceStateUpdate: (oldState: VoiceStateSnapshot, newState: VoiceStateSnapshot) => void } {
+  const timerByGuild = new Map<string, number>()
 
-  const defaultGetBotChannelId = (guildId) => {
+  const defaultGetBotChannelId = (guildId: string): string | null => {
     const p = registry.get(guildId)
     return p?.voiceConnection?.joinConfig?.channelId ?? null
   }
   const resolveBotChannel = getBotChannelId ?? defaultGetBotChannelId
 
-  function humansInChannel(state, channelId) {
+  function humansInChannel(state: VoiceStateSnapshot, channelId: string | null): number {
     if (!channelId) return 0
     let count = 0
     for (const m of state.guild.members.cache.values()) {
@@ -23,7 +55,7 @@ export function createIdleWatcher({
     return count
   }
 
-  function countHumansUsingStateShim(state, channelId) {
+  function countHumansUsingStateShim(state: VoiceStateSnapshot, channelId: string): number {
     let count = 0
     for (const m of state.guild.members.cache.values()) {
       if (m.user?.bot) continue
@@ -33,7 +65,7 @@ export function createIdleWatcher({
     return count
   }
 
-  function handleVoiceStateUpdate(oldState, newState) {
+  function handleVoiceStateUpdate(oldState: VoiceStateSnapshot, newState: VoiceStateSnapshot): void {
     const guildId = newState.guild.id
     if (!registry.get(guildId)) return
     const botChannelId = resolveBotChannel(guildId) ?? newState.channelId ?? oldState.channelId

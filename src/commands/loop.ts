@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js'
+import type { CommandContext, CommandInteraction, LoopMode } from '../types.js'
 const EPHEMERAL = 1 << 6
 export const data = new SlashCommandBuilder()
   .setName('loop')
@@ -10,10 +11,10 @@ export const data = new SlashCommandBuilder()
       { name: 'queue', value: 'queue' },
     ),
   )
-export async function execute(interaction, { registry }) {
-  const player = registry.get(interaction.guildId)
-  if (!player) return interaction.reply({ content: 'Nothing is playing.', flags: EPHEMERAL })
-  const mode = interaction.options.getString('mode')
+export async function execute(interaction: CommandInteraction, { registry }: CommandContext): Promise<void> {
+  const player = interaction.guildId ? registry.get(interaction.guildId) : undefined
+  if (!player) { await interaction.reply({ content: 'Nothing is playing.', flags: EPHEMERAL }); return }
+  const mode = interaction.options.getString('mode') as LoopMode
   player.setLoop(mode)
   await interaction.reply({ content: `Loop mode: **${mode}**`, flags: EPHEMERAL })
 }

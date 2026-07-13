@@ -10,8 +10,9 @@ import * as loop from './loop.js'
 import * as volume from './volume.js'
 import * as queue from './queue.js'
 import * as nowplaying from './nowplaying.js'
+import type { CommandModule } from '../types.js'
 
-export const commands = new Map([
+export const commands: Map<string, CommandModule> = new Map<string, CommandModule>([
   ['ping', ping],
   ['play', play],
   ['skip', skip],
